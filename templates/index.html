@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rock Paper Scissors</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#f7fafc;
+      --card:#ffffff;
+      --muted:#7a8a9e;
+      --text:#1f2937;
+      --brand:#6c5ce7;      /* playful violet */
+      --brand2:#00c2ff;     /* sky */
+      --win:#10b981;
+      --lose:#ef4444;
+      --tie:#f59e0b;
+      --shadow: 0 6px 18px rgba(31,41,55,0.08);
+      --round:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a,button{font-family:inherit}
+    .container{max-width:1280px;margin:0 auto;padding:16px}
+
+    /* Header */
+    .header{
+      background: linear-gradient(135deg, #a5b4fc 0%, #93c5fd 40%, #a7f3d0 100%);
+      border-radius: var(--round);
+      padding: 18px 22px;
+      display:flex;align-items:center;justify-content:space-between;
+      color:#0b1324; box-shadow: var(--shadow);
+    }
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand-bubble{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6c5ce7,#00c2ff);display:grid;place-items:center;color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(0,0,0,.12)}
+    .brand h1{font-size:18px;margin:0;font-weight:700}
+    .tag{font-size:12px;color:#0b1324b3}
+
+    /* Layout */
+    .grid{display:grid;grid-template-columns: 1.25fr 0.75fr;gap:16px;margin-top:16px}
+    @media (max-width: 980px){ .grid{grid-template-columns: 1fr} }
+
+    /* Cards */
+    .card{background:var(--card);border-radius:var(--round);padding:16px;box-shadow: var(--shadow)}
+    .section-title{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .section-title .dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+    .muted{color:var(--muted);font-size:14px}
+
+    /* Status bar */
+    .status-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .badge{font-size:12px;padding:6px 10px;border-radius:999px;background: #eef2ff;color:#4f46e5;font-weight:600}
+    .progress{height:10px;border-radius:999px;background:#eef2ff;overflow:hidden}
+    .bar{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .25s ease}
+
+    /* Scoreboard */
+    .scoreboard{display:grid;grid-template-columns: 1fr 80px 1fr;gap:14px;align-items:stretch}
+    .score{border-radius:14px;background:#f1f5f9;padding:14px;text-align:center}
+    .score .label{font-size:12px;color:#64748b}
+    .num{font-size:40px;font-weight:700;margin-top:4px}
+    .vs{display:grid;place-items:center;background:#e2e8f0;border-radius:14px;color:#475569;font-weight:700}
+
+    .chips{margin-top:10px}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:#f1f5f9;color:#334155;border-radius:999px;padding:6px 10px;margin-right:8px}
+
+    /* Round display */
+    .round-grid{display:grid;grid-template-columns: 1fr 100px 1fr;gap:14px;align-items:center}
+    .round-card{background:#fafafa;border:1px solid #e5e7eb;border-radius:14px;padding:16px;text-align:center}
+    .who{font-size:12px;color:#6b7280;font-weight:600}
+    .gesture{font-size:46px;margin-top:4px}
+    .gname{font-size:14px;color:#64748b}
+
+    .result{margin-top:10px;text-align:center}
+    .pill{display:inline-block;padding:8px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff}
+    .pill.win{background:var(--win)}
+    .pill.lose{background:var(--lose)}
+    .pill.tie{background:var(--tie)}
+
+    /* Buttons */
+    .btn{appearance:none;border:0;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:12px 14px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(108,92,231,.25);transition:transform .08s ease, box-shadow .2s}
+    .btn:hover{transform: translateY(-1px); box-shadow:0 10px 22px rgba(108,92,231,.28)}
+    .btn:active{transform: translateY(0)}
+    .btn.secondary{background:#f3f4f6;color:#111827;box-shadow: none}
+    .btn-wrap{display:flex;gap:10px;flex-wrap:wrap}
+
+    /* Camera */
+    .cam-card{padding:0;overflow:hidden}
+    .cam-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #eef2f7}
+    .cam-box{position:relative; width:100%; aspect-ratio: 4/3; overflow:hidden; background:#0b1324}
+    .cam-box video, .cam-box canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border:0; border-radius:0}
+    .cam-box video{transform: scaleX(-1)}
+
+    /* Tiny helpers & animations */
+    .bump{animation:bump .35s ease}
+    @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+    .shake{animation:shake .5s cubic-bezier(.36,.07,.19,.97) both}
+    @keyframes shake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="brand-bubble">RPS</div>
+        <div>
+          <h1>Rock Paper Scissors</h1>
+          <div class="tag">OpenCV Hand Detection • Cheerful Theme</div>
+        </div>
+      </div>
+     
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: Gameplay -->
+      <div class="left">
+        <div class="card">
+          <div class="section-title"><span class="dot"></span><strong>Game Status</strong></div>
+          <div class="status-row">
+            <div id="status-text" class="muted">Waiting for hand detection...</div>
+            <span id="status-badge" class="badge">WAITING</span>
+          </div>
+          <div class="progress" style="margin-top:10px;"><div class="bar" id="progress-bar"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="section-title"><span class="dot"></span><strong>Scoreboard</strong></div>
+          <div class="scoreboard">
+            <div class="score">
+              <div class="label">You</div>
+              <div id="player-score" class="num">0</div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="score">
+              <div class="label">AI</div>
+              <div id="computer-score" class="num">0</div>
+            </div>
+          </div>
+          <div class="chips">
+            <span class="chip">Round <span id="current-round">1</span></span>
+          </div>
+        </div>
+
+        <div class="card" id="round-display" style="display:none;">
+          <div class="section-title"><span class="dot"></span><strong id="round-title">Current Round</strong></div>
+          <div class="round-grid">
+            <div class="round-card" id="player-card">
+              <div class="who">You</div>
+              <div class="gesture" id="player-gesture">❓</div>
+              <div class="gname" id="player-gesture-name">Waiting...</div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="round-card" id="computer-card">
+              <div class="who">AI</div>
+              <div class="gesture" id="computer-gesture">🤖</div>
+              <div class="gname" id="computer-gesture-name">Thinking...</div>
+            </div>
+          </div>
+          <div class="result" id="result-display" style="display:none;">
+            <span id="result-badge" class="pill">Result</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title"><span class="dot"></span><strong>Controls</strong></div>
+          <div class="btn-wrap">
+            <button id="pause-resume-btn" class="btn secondary" onclick="togglePauseResume()">Pause</button>
+            <button class="btn" onclick="newGame()">New Game</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Camera -->
+      <div class="right">
+        <div class="card cam-card">
+          <div class="cam-head">
+            <div class="section-title" style="margin:0;"><span class="dot"></span><strong>Live Camera</strong></div>
+            <button id="camera-toggle" class="btn" onclick="toggleCamera()">Start Camera</button>
+          </div>
+          <div class="cam-box" id="cam-box">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas" width="640" height="480"></canvas>
+            <canvas id="fx-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title"><span class="dot"></span><strong>Hand Tracking</strong></div>
+          <div class="muted">Confidence: <span id="confidence">0%</span></div>
+          <div class="muted">Gesture: <span id="detected-gesture">Unknown</span></div>
+          <div class="muted" style="margin-top:8px;">Quick Reference: ✊ Rock • ✋ Paper • ✌️ Scissors</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let video, canvas, ctx, isCapturing=false, gameState={}, countdownInterval;
+
+    const gestureEmojis = { rock:'✊', paper:'✋', scissors:'✌️', unknown:'❓' };
+    const gestureNames  = { rock:'Rock', paper:'Paper', scissors:'Scissors', unknown:'Unknown' };
+
+    // Fit overlay canvases to container
+    function fitCanvases(){
+      const cam = document.getElementById('cam-box');
+      const c1 = document.getElementById('canvas');
+      const c2 = document.getElementById('fx-canvas');
+      const rect = cam.getBoundingClientRect();
+      c1.style.width = c2.style.width = rect.width + 'px';
+      c1.style.height = c2.style.height = rect.height + 'px';
+      c1.width = rect.width; c1.height = rect.height;
+      c2.width = rect.width; c2.height = rect.height;
+    }
+    window.addEventListener('resize', fitCanvases);
+
+    async function initCamera(){
+      try{
+        video = document.getElementById('video');
+        canvas = document.getElementById('canvas');
+        ctx = canvas.getContext('2d');
+        const stream = await navigator.mediaDevices.getUserMedia({ video:{ width:640, height:480, facingMode:'user' }, audio:false });
+        video.srcObject = stream;
+        setTimeout(fitCanvases, 100);
+        return true;
+      }catch(e){ alert('Please allow camera'); console.error(e); return false; }
+    }
+    async function toggleCamera(){
+      const btn = document.getElementById('camera-toggle');
+      if(!isCapturing){
+        const ok = await initCamera();
+        if(ok){ isCapturing=true; btn.textContent='Stop Camera'; startProcessing(); }
+      }else{
+        if(video && video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); video.srcObject=null; }
+        isCapturing=false; btn.textContent='Start Camera';
+      }
+    }
+
+    function startProcessing(){
+      if(!isCapturing) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg', .8);
+      fetch('/api/process_frame', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ image: imageData })})
+        .then(r=>r.json())
+        .then(data=>{ updateDetectionUI(data); setTimeout(startProcessing, 100); })
+        .catch(_=> setTimeout(startProcessing, 400));
+    }
+
+    function updateDetectionUI(data){
+      document.getElementById('confidence').textContent = data.confidence + '%';
+      document.getElementById('detected-gesture').textContent = gestureNames[data.gesture] || 'Unknown';
+    }
+
+    function fetchGameState(){
+      fetch('/api/game_state').then(r=>r.json()).then(data=>{ gameState=data; updateGameUI(data); }).catch(()=>{});
+    }
+
+    function updateGameUI(state){
+      setNum('player-score', state.player_score);
+      setNum('computer-score', state.computer_score);
+      setNum('current-round', state.current_round);
+
+      updateStatus(state);
+      updateRound(state);
+      updatePause(state);
+
+      if(state.game_status==='countdown'){
+        if(!countdownInterval) countdownInterval = setInterval(()=>{ fetch('/api/countdown_tick',{method:'POST'}).catch(()=>{}); },1000);
+      } else if(countdownInterval){ clearInterval(countdownInterval); countdownInterval=null; }
+    }
+
+    function updateStatus(s){
+      const t = document.getElementById('status-text');
+      const b = document.getElementById('status-badge');
+      const p = document.getElementById('progress-bar');
+      let text='Ready?', badge='READY', prog=0;
+      if(s.game_status==='waiting'){ text = s.hand_detected ? 'Hand detected! Get ready…' : 'Waiting for hand detection…'; badge='WAITING'; prog = s.hand_detected ? 25 : 0; }
+      else if(s.game_status==='countdown'){ text='Countdown…'; badge='COUNTDOWN'; prog=50; }
+      else if(s.game_status==='playing'){ text='Make your move!'; badge='PLAYING'; prog=75; }
+      else if(s.game_status==='result'){ text='Round complete'; badge='RESULT'; prog=100; }
+      else if(s.game_status==='paused'){ text='Game paused'; badge='PAUSED'; prog=50; }
+      t.textContent=text; b.textContent=badge; p.style.width = prog + '%';
+    }
+
+    function updateRound(s){
+      const wrap = document.getElementById('round-display');
+      const title = document.getElementById('round-title');
+      const pg = document.getElementById('player-gesture');
+      const pgn = document.getElementById('player-gesture-name');
+      const cg = document.getElementById('computer-gesture');
+      const cgn = document.getElementById('computer-gesture-name');
+      const rd = document.getElementById('result-display');
+      const rb = document.getElementById('result-badge');
+
+      if(s.player_move || s.computer_move || s.game_status==='result'){
+        wrap.style.display='block';
+        title.textContent = s.game_status==='result' ? 'Round Result' : 'Current Round';
+        pg.textContent = (gestureEmojis[s.player_move] || '❓');
+        pgn.textContent = (gestureNames[s.player_move] || 'Waiting…');
+        cg.textContent = (gestureEmojis[s.computer_move] || '🤖');
+        cgn.textContent = (gestureNames[s.computer_move] || 'Thinking…');
+
+        if(s.last_winner){
+          rd.style.display='block';
+          if(s.last_winner==='player'){ rb.textContent='You Win'; rb.className='pill win'; bump('player-score'); }
+          else if(s.last_winner==='computer'){ rb.textContent='Computer Wins'; rb.className='pill lose'; bump('computer-score'); }
+          else { rb.textContent='Tie'; rb.className='pill tie'; }
+        } else { rd.style.display='none'; }
+      } else {
+        wrap.style.display='none';
+      }
+    }
+
+    function updatePause(s){
+      const btn = document.getElementById('pause-resume-btn');
+      btn.textContent = (s.game_status==='paused') ? 'Resume' : 'Pause';
+    }
+
+    function togglePauseResume(){
+      const endpoint = (gameState.game_status==='paused') ? '/api/resume_game' : '/api/pause_game';
+      fetch(endpoint,{method:'POST'}).catch(()=>{});
+    }
+    function newGame(){ fetch('/api/new_game',{method:'POST'}).catch(()=>{}); }
+
+    function setNum(id,n){ const el=document.getElementById(id); if(el && el.textContent!=n){ el.textContent=n; bump(id); } }
+    function bump(id){ const el=document.getElementById(id); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
+    function init(){
+      fitCanvases();
+      fetchGameState();
+      setInterval(fetchGameState,500);
+    }
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
