@@ -298,6 +298,14 @@ def countdown_tick():
                 threading.Thread(target=determine_result, daemon=True).start()
     
     return jsonify({'status': 'success'})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+def handler(request):
+    with app.request_context(request.environ):
+        try:
+            response = app.full_dispatch_request()
+        except Exception as e:
+            response = app.make_response(app.handle_exception(e))
+        return Response(
+            response.get_data(),
+            status=response.status_code,
+            headers=dict(response.headers)
+        )
