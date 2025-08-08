@@ -248,6 +248,3 @@ def handler(request):
             status=response.status_code,
             headers=dict(response.headers)
         )
-
-if __name__ == '__main__':
-    app.run()
